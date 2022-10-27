@@ -100,6 +100,7 @@ public class Arena implements IArena {
         final var invisiblePlayer = invisiblePlayers.get(player.getUniqueId());
         if (invisiblePlayer != null) {
             invisiblePlayer.setHidden(false);
+            invisiblePlayer.showPlayer();
             invisiblePlayers.remove(player.getUniqueId());
         }
     }

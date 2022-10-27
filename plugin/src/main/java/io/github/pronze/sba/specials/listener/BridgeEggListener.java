@@ -3,6 +3,7 @@ package io.github.pronze.sba.specials.listener;
 import io.github.pronze.sba.SBA;
 import io.github.pronze.sba.specials.runners.BridgeEggRunnable;
 import io.github.pronze.sba.utils.SBAUtil;
+import org.bukkit.Material;
 import org.bukkit.entity.Egg;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -54,8 +55,8 @@ public class BridgeEggListener implements Listener {
         if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             if (game.getStatus() == GameStatus.RUNNING && !gamePlayer.isSpectator && event.getItem() != null) {
                 ItemStack stack = event.getItem();
-                String unhidden = APIUtils.unhashFromInvisibleStringStartsWith(stack, BRIDGE_EGG_PREFIX);
-                if (unhidden != null) {
+//                String unhidden = APIUtils.unhashFromInvisibleStringStartsWith(stack, BRIDGE_EGG_PREFIX);
+                if (stack.getType() == Material.EGG) {
                     event.setCancelled(true);
                     stack.setAmount(stack.getAmount() - 1);
                     player.updateInventory();

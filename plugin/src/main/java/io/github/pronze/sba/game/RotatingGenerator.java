@@ -100,17 +100,11 @@ public class RotatingGenerator implements IRotatingGenerator {
                 //Logger.trace("RotatingGenerator::hologramTask ({},{})", this,hologramTask);
 
                 boolean full = itemSpawner.getMaxSpawnedResources() <= spawnedItems.size();
-                if (!full) {
-                    time--;
-                }
-                final var format = !full ? LanguageService
+                time--;
+
+                final var format = LanguageService
                         .getInstance()
                         .get(MessageKeys.ROTATING_GENERATOR_FORMAT)
-                        .toStringList() :
-
-                        LanguageService
-                        .getInstance()
-                        .get(MessageKeys.ROTATING_GENERATOR_FULL_TEXT_FORMAT)
                         .toStringList();
 
                 final var newLines = new ArrayList<String>();
@@ -133,7 +127,7 @@ public class RotatingGenerator implements IRotatingGenerator {
 
                 update(newLines);
 
-                if (time <= 0 || full) {
+                if (time <= 0) {
                     time = itemSpawner.getItemSpawnerType().getInterval();
                 }
             }

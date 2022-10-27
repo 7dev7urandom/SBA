@@ -7,10 +7,12 @@ import io.github.pronze.sba.config.SBAConfig;
 import io.github.pronze.sba.data.DegradableItem;
 import io.github.pronze.sba.game.ArenaManager;
 import io.github.pronze.sba.lib.lang.LanguageService;
+import io.github.pronze.sba.utils.Logger;
 import io.github.pronze.sba.utils.SBAUtil;
 import io.github.pronze.sba.utils.ShopUtil;
 import io.github.pronze.sba.wrapper.SBAPlayerWrapper;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -92,14 +94,16 @@ public class PlayerListener implements Listener {
                             itemArr.add(ShopUtil.downgradeItem(stack, DegradableItem.WEAPONARY));
                             break;
                         case "PICKAXE":
+                            itemArr.add(ShopUtil.downgradeItem(stack, DegradableItem.PICKAXE));
+                            break;
                         case "AXE":
-                            itemArr.add(ShopUtil.downgradeItem(stack, DegradableItem.TOOLS));
+                            itemArr.add(ShopUtil.downgradeItem(stack, DegradableItem.AXE));
                             break;
                         case "LEGGINGS":
                         case "BOOTS":
                         case "CHESTPLATE":
                         case "HELMET":
-                            itemArr.add(ShopUtil.downgradeItem(stack, DegradableItem.ARMOR));
+//                            itemArr.add(ShopUtil.downgradeItem(stack, DegradableItem.ARMOR));
                             break;
                         case "SHEARS":
                             itemArr.add(stack);
@@ -320,12 +324,13 @@ public class PlayerListener implements Listener {
         if (entity instanceof Player) {
             final var player = (Player) entity;
 
-            if (Main.isPlayerInGame(player)) {
+            if (Main.isPlayerInGame(player) && event.getCause() != EntityDamageEvent.DamageCause.FALL) {
                 final var game = Main.getInstance().getGameOfPlayer(player);
                 ArenaManager
                         .getInstance()
                         .get(game.getName())
                         .ifPresent(arena -> arena.removeHiddenPlayer(player));
+                player.sendMessage(ChatColor.RED + "You took damage and lost your invisibility");
 
                 if (event.getCause() == EntityDamageEvent.DamageCause.ENTITY_EXPLOSION) {
                     event.setDamage(SBAConfig.getInstance().node("explosion-damage").getDouble(1.0D));
@@ -358,6 +363,7 @@ public class PlayerListener implements Listener {
             }
 
             if (isInvis) {
+                Logger.info("Player is now invis and vanished");
                 final var playerGame = Main.getInstance().getGameOfPlayer(player);
                 ArenaManager
                         .getInstance()

@@ -48,8 +48,9 @@ public class TrapTask extends BaseGameTask {
 
                                 arena.getStorage().setPurchasedBlindTrap(team, false);
                                 player.addPotionEffect(new PotionEffect
-                                        (PotionEffectType.BLINDNESS, 20 * 3, 2));
-
+                                        (PotionEffectType.BLINDNESS, 20 * 8, 2));
+                                player.addPotionEffect(new PotionEffect
+                                        (PotionEffectType.SLOW, 20 * 8, 1));
                                 if (arena.isPlayerHidden(player)) {
                                     arena.removeHiddenPlayer(player);
                                 }

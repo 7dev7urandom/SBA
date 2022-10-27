@@ -44,8 +44,8 @@ public class ShopUtil {
     public static final List<String> romanNumerals = List.of("NONE", "I", "II", "III", "IV", "V", "VI", "VII", "VIII",
             "IX", "X");
     public static final List<String> orderOfArmor = List.of("GOLDEN,GOLD", "CHAINMAIL", "IRON", "DIAMOND", "NETHERITE");
-    public static final List<String> orderOfTools = List.of("WOODEN,WOOD", "STONE", "GOLDEN,GOLD", "IRON", "DIAMOND");
-
+    public static final List<String> orderOfPickaxes = List.of("WOODEN", "IRON", "GOLDEN", "DIAMOND");
+    public static final List<String> orderOfAxes = List.of("WOODEN", "STONE", "IRON", "DIAMOND");
     @NotNull
     public static Integer getLevelFromMaterialName(@NotNull String name, final List<String> list) {
         name = name.substring(0, name.contains("_") ? name.lastIndexOf("_") : name.length());
@@ -60,7 +60,7 @@ public class ShopUtil {
 
     @NotNull
     public static String getMaterialFromLevel(int level, DegradableItem itemType) {
-        final var list = itemType == DegradableItem.ARMOR ? orderOfArmor : orderOfTools;
+        final var list = itemType == DegradableItem.ARMOR ? orderOfArmor : itemType == DegradableItem.PICKAXE ? orderOfPickaxes : orderOfAxes;
         var obj = list.get(level);
         if (obj == null) {
             obj = list.get(0);
@@ -193,7 +193,7 @@ public class ShopUtil {
 
     public static ItemStack downgradeItem(ItemStack currentItem, DegradableItem itemType) {
         final var currentItemName = getMaterialFromArmorOrTools(currentItem.getType());
-        final int currentItemLevel = getLevelFromMaterialName(currentItemName, orderOfTools);
+        final int currentItemLevel = getLevelFromMaterialName(currentItemName, itemType == DegradableItem.PICKAXE ? orderOfPickaxes : orderOfAxes);
 
         if (currentItemLevel == 0) {
             return currentItem;

@@ -5,6 +5,7 @@ package io.github.pronze.sba.data;
  */
 public enum DegradableItem {
     ARMOR,
-    TOOLS,
+    PICKAXE,
+    AXE,
     WEAPONARY
 }

@@ -23,6 +23,7 @@ import org.screamingsandals.lib.player.PlayerMapper;
 import org.screamingsandals.lib.plugin.ServiceManager;
 import org.screamingsandals.lib.utils.annotations.Service;
 import org.screamingsandals.simpleinventories.SimpleInventoriesCore;
+import org.screamingsandals.simpleinventories.builder.AbstractQueueBuilder;
 import org.screamingsandals.simpleinventories.builder.InventorySetBuilder;
 import org.screamingsandals.simpleinventories.events.ItemRenderEvent;
 import org.screamingsandals.simpleinventories.inventory.Include;
@@ -62,7 +63,6 @@ public class SBAStoreInventory extends AbstractStoreInventory {
 
     @Override
     public void onPreGenerateItem(ItemRenderEvent event) {
-        // do nothing here
     }
 
     @Override

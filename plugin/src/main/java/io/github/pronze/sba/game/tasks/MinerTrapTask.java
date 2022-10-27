@@ -48,7 +48,7 @@ public class MinerTrapTask extends BaseGameTask {
                                 }
 
                                 arena.getStorage().setPurchasedMinerTrap(team, false);
-                                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING, 20 * 10, 2));
+                                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING, 20 * 10, 0));
 
                                 if (arena.isPlayerHidden(player)) {
                                     arena.removeHiddenPlayer(player);

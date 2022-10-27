@@ -4,6 +4,7 @@ import io.github.pronze.sba.SBA;
 import io.github.pronze.sba.config.SBAConfig;
 import io.github.pronze.sba.specials.PopupTower;
 import io.github.pronze.sba.utils.SBAUtil;
+import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -49,8 +50,7 @@ public class PopupTowerListener implements Listener {
         if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             if (game.getStatus() == GameStatus.RUNNING && !gamePlayer.isSpectator && event.getItem() != null) {
                 ItemStack stack = event.getItem();
-                String unhidden = APIUtils.unhashFromInvisibleStringStartsWith(stack, POPUP_TOWER_PREFIX);
-                if (unhidden != null) {
+                if (stack.getType() == Material.CHEST) {
                     event.setCancelled(true);
                     stack.setAmount(stack.getAmount() - 1);
                     player.updateInventory();

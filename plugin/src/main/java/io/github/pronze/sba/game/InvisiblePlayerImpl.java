@@ -83,7 +83,7 @@ public class InvisiblePlayerImpl implements InvisiblePlayer {
                     arena.removeHiddenPlayer(hiddenPlayer);
                 }
             }
-        }.runTaskTimer(SBA.getPluginInstance(), 0L, 20L);
+        }.runTaskTimer(SBA.getPluginInstance(), 0L, 5L);
     }
 
     private boolean isElligble() {

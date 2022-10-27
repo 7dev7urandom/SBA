@@ -91,6 +91,7 @@ public class ExplosionVelocityControlListener implements Listener {
                             if (player.getGameMode() == GameMode.SPECTATOR || !Main.isPlayerInGame(player)) {
                                 return;
                             }
+                            if(entity.getLocation().getY() < explodedEntity.getLocation().getY() - 0.5) return;
                             vector.add(new Vector(player.getEyeLocation().getDirection().getX(), 0,
                                     player.getEyeLocation().getDirection().getZ()));
                             AntiCheatIntegration.getInstance().beginTntJump(player);
