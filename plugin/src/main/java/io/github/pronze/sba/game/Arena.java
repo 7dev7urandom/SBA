@@ -176,60 +176,60 @@ public class Arena implements IArena {
             }
             game.getGameStores().forEach(store -> {
                 Logger.trace("Replacing store {}", store);
-                final var nonAPIStore = (GameStore) store;
-                try {
-                    final var villager = nonAPIStore.kill();
-                    if (villager != null) {
-                        Main.unregisterGameEntity(villager);
-                    }
-
-                    if (mockEntity == null) {
-                        // find a better version independent way to mock entities lol
-                        mockEntity = (Bat) game.getGameWorld()
-                                .spawnEntity(game.getSpectatorSpawn().clone().add(0, 300, 0), EntityType.BAT);
-                        mockEntity.setAI(false);
-                    }
-
-                    // set fake entity to avoid bw listener npe
-                    Reflect.setField(nonAPIStore, "entity", mockEntity);
-                } catch (Throwable t) {
-                    Logger.error("SBA cannot unspawn the store, is something preventing the spawning of the stores?");
-                    t.printStackTrace();
-                }
-
-                final var file = store.getShopFile();
-                
-                List<Component> name = new ArrayList<Component>();
-                NPCSkin skin = null;
-                try {
-                    if (file != null && file.equalsIgnoreCase("upgradeShop.yml")) {
-                        skin = NPCStoreService.getInstance().getUpgradeShopSkin();
-                        name = NPCStoreService.getInstance().getUpgradeShopText();
-                    } else {
-                        skin = NPCStoreService.getInstance().getShopSkin();
-                        name = NPCStoreService.getInstance().getShopText();
-                    }
-                } catch (Throwable t) {
-                    t.printStackTrace();
-                }
-
-                final var npc = NPC.of(LocationMapper.wrapLocation(store.getStoreLocation()))
-                        .displayName(name)
-                        .lookAtPlayer(true)
-                        .skin(skin)
-                        .touchable(true);
-
-                if (file != null && file.equals("upgradeShop.yml")) {
-                    upgradeStoreNPCS.add(npc);
-                } else {
-                    storeNPCS.add(npc);
-                }
-
-                game.getConnectedPlayers()
-                        .stream()
-                        .map(PlayerMapper::wrapPlayer)
-                        .forEach(npc::addViewer);
-                npc.show();
+//                final var nonAPIStore = (GameStore) store;
+//                try {
+//                    final var villager = nonAPIStore.kill();
+//                    if (villager != null) {
+//                        Main.unregisterGameEntity(villager);
+//                    }
+//
+//                    if (mockEntity == null) {
+//                        // find a better version independent way to mock entities lol
+//                        mockEntity = (Bat) game.getGameWorld()
+//                                .spawnEntity(game.getSpectatorSpawn().clone().add(0, 300, 0), EntityType.BAT);
+//                        mockEntity.setAI(false);
+//                    }
+//
+//                    // set fake entity to avoid bw listener npe
+//                    Reflect.setField(nonAPIStore, "entity", mockEntity);
+//                } catch (Throwable t) {
+//                    Logger.error("SBA cannot unspawn the store, is something preventing the spawning of the stores?");
+//                    t.printStackTrace();
+//                }
+//
+//                final var file = store.getShopFile();
+//
+//                List<Component> name = new ArrayList<Component>();
+//                NPCSkin skin = null;
+//                try {
+//                    if (file != null && file.equalsIgnoreCase("upgradeShop.yml")) {
+//                        skin = NPCStoreService.getInstance().getUpgradeShopSkin();
+//                        name = NPCStoreService.getInstance().getUpgradeShopText();
+//                    } else {
+//                        skin = NPCStoreService.getInstance().getShopSkin();
+//                        name = NPCStoreService.getInstance().getShopText();
+//                    }
+//                } catch (Throwable t) {
+//                    t.printStackTrace();
+//                }
+//
+//                final var npc = NPC.of(LocationMapper.wrapLocation(store.getStoreLocation()))
+//                        .displayName(name)
+//                        .lookAtPlayer(true)
+//                        .skin(skin)
+//                        .touchable(true);
+//
+//                if (file != null && file.equals("upgradeShop.yml")) {
+//                    upgradeStoreNPCS.add(npc);
+//                } else {
+//                    storeNPCS.add(npc);
+//                }
+//
+//                game.getConnectedPlayers()
+//                        .stream()
+//                        .map(PlayerMapper::wrapPlayer)
+//                        .forEach(npc::addViewer);
+//                npc.show();
             });
         }
     }
@@ -376,7 +376,7 @@ public class Arena implements IArena {
     @Override
     public void createRotatingGenerator(@NotNull ItemSpawner itemSpawner, @NotNull Material rotationMaterial) {
         final var generator = new RotatingGenerator(itemSpawner, new ItemStack(rotationMaterial),
-                itemSpawner.getLocation());
+                itemSpawner.getLocation(), game);
         generator.spawn(game.getConnectedPlayers());
         rotatingGenerators.add(generator);
     }

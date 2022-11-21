@@ -1,11 +1,14 @@
 package io.github.pronze.sba.listener;
 
+import io.github.pronze.sba.LastHit;
 import io.github.pronze.sba.MessageKeys;
 import io.github.pronze.sba.Permissions;
 import io.github.pronze.sba.SBA;
 import io.github.pronze.sba.config.SBAConfig;
 import io.github.pronze.sba.data.DegradableItem;
+import io.github.pronze.sba.game.Arena;
 import io.github.pronze.sba.game.ArenaManager;
+import io.github.pronze.sba.game.IArena;
 import io.github.pronze.sba.lib.lang.LanguageService;
 import io.github.pronze.sba.utils.Logger;
 import io.github.pronze.sba.utils.SBAUtil;
@@ -16,10 +19,12 @@ import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -103,8 +108,6 @@ public class PlayerListener implements Listener {
                         case "BOOTS":
                         case "CHESTPLATE":
                         case "HELMET":
-//                            itemArr.add(ShopUtil.downgradeItem(stack, DegradableItem.ARMOR));
-                            break;
                         case "SHEARS":
                             itemArr.add(stack);
                             break;
@@ -115,17 +118,18 @@ public class PlayerListener implements Listener {
         arena.getPlayerData(player.getUniqueId()).ifPresent(playerData -> playerData.setInventory(itemArr));
 
         if (SBAConfig.getInstance().getBoolean("give-killer-resources", true)) {
-            final var killer = e.getEntity().getKiller();
-
-            if (killer != null && Main.getInstance().isPlayerPlayingAnyGame(killer)
-                    && killer.getGameMode() == GameMode.SURVIVAL) {
+//            final var killer = e.getEntity().getKiller();
+            LastHit lastHit = LastHit.getLastHit(e.getEntity());
+            if (lastHit != null && System.currentTimeMillis() - 6000 < lastHit.getWhen()
+                    && Main.getInstance().isPlayerPlayingAnyGame(lastHit.getWho())
+                    && lastHit.getWho().getGameMode() == GameMode.SURVIVAL) {
                 Arrays.stream(player.getInventory().getContents())
                         .filter(Objects::nonNull)
                         .forEach(drop -> {
                             if (generatorDropItems.contains(drop.getType())) {
-                                killer.sendMessage("+" + drop.getAmount() + " "
+                                lastHit.getWho().sendMessage("+" + drop.getAmount() + " "
                                         + drop.getType().name().toLowerCase().replace("_", " "));
-                                killer.getInventory().addItem(drop);
+                                lastHit.getWho().getInventory().addItem(drop);
                             }
                         });
             }
@@ -231,7 +235,7 @@ public class PlayerListener implements Listener {
                 && SBAConfig.getInstance().getBoolean("block-players-putting-certain-items-onto-chest", true)
                 && (topSlot.getType() == InventoryType.CHEST || topSlot.getType() == InventoryType.ENDER_CHEST)
                 && bottomSlot.getType() == InventoryType.PLAYER) {
-            if (typeName.endsWith("AXE") || typeName.endsWith("SWORD")) {
+            if (event.getCurrentItem().getType() == Material.WOODEN_SWORD) {
                 event.setResult(Event.Result.DENY);
                 LanguageService
                         .getInstance()
@@ -317,7 +321,15 @@ public class PlayerListener implements Listener {
                 });
         SBA.getInstance().getPlayerWrapperService().unregister(player);
     }
-
+    @EventHandler(priority = EventPriority.LOW)
+    public void onPlayerDamageByPlayer(EntityDamageByEntityEvent event) {
+        if(event.getEntity() instanceof Player) {
+            Player damager = null;
+            if(event.getDamager() instanceof Player) damager = (Player) event.getDamager();
+            else if (event.getDamager() instanceof Projectile && ((Projectile) event.getDamager()).getShooter() instanceof Player) damager = ((Player)((Projectile) event.getDamager()).getShooter());
+            if(damager != null) LastHit.setLastHit((Player) event.getEntity(), damager, LastHit.HitType.MELEE);
+        }
+    }
     @EventHandler
     public void onPlayerDamage(EntityDamageEvent event) {
         final var entity = event.getEntity();
@@ -328,9 +340,12 @@ public class PlayerListener implements Listener {
                 final var game = Main.getInstance().getGameOfPlayer(player);
                 ArenaManager
                         .getInstance()
-                        .get(game.getName())
-                        .ifPresent(arena -> arena.removeHiddenPlayer(player));
-                player.sendMessage(ChatColor.RED + "You took damage and lost your invisibility");
+                        .get(game.getName()).ifPresent(iArena -> {
+                            if(iArena.isPlayerHidden(player)) {
+                                iArena.removeHiddenPlayer(player);
+                                player.sendMessage(ChatColor.RED + "You took damage and lost your invisibility");
+                            }
+                        });
 
                 if (event.getCause() == EntityDamageEvent.DamageCause.ENTITY_EXPLOSION) {
                     event.setDamage(SBAConfig.getInstance().node("explosion-damage").getDouble(1.0D));

@@ -6,8 +6,9 @@ import io.github.pronze.sba.events.SBASpawnerTierUpgradeEvent;
 import io.github.pronze.sba.game.*;
 import io.github.pronze.sba.lib.lang.LanguageService;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.screamingsandals.bedwars.api.game.Game;
+import org.screamingsandals.bedwars.game.Game;
 import org.screamingsandals.lib.player.PlayerMapper;
 import org.screamingsandals.lib.utils.annotations.Service;
 
@@ -45,8 +46,8 @@ public class GeneratorTask extends BaseGameTask {
 
     @Override
     public void run() {
-        if (nextEvent != GameTierEvent.GAME_END) {
-            if (elapsedTime == nextEvent.getTime()) {
+        if (nextEvent.ordinal() < GameTierEvent.BED_BREAK.ordinal()) {
+            if (elapsedTime >= nextEvent.getTime()) {
                 if (timerUpgrades) {
                     final var tierName = nextEvent.getKey();
                     GeneratorUpgradeType upgradeType = GeneratorUpgradeType.fromString(tierName.substring(0, tierName.indexOf("-")));
@@ -108,6 +109,15 @@ public class GeneratorTask extends BaseGameTask {
                                         .toArray(org.screamingsandals.lib.player.PlayerWrapper[]::new));
                     }
                 }
+                nextEvent = nextEvent.getNextEvent();
+            }
+        } else if (nextEvent == GameTierEvent.BED_BREAK) {
+            if(elapsedTime >= nextEvent.getTime()) {
+                game.getRunningTeams().stream().forEach(t -> {
+                    ((Game)game).bedDestroyed(t.getTargetBlock(), null, true, false, false);
+                    t.getTargetBlock().getWorld().getBlockAt(t.getTargetBlock()).setType(Material.AIR);
+                });
+                game.getConnectedPlayers().stream().forEach(p -> p.sendMessage(ChatColor.RED + "All beds have been destroyed!"));
                 nextEvent = nextEvent.getNextEvent();
             }
         }

@@ -12,6 +12,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
+import org.screamingsandals.bedwars.Main;
+import org.screamingsandals.bedwars.api.events.BedwarsResourceSpawnEvent;
+import org.screamingsandals.bedwars.api.game.Game;
 import org.screamingsandals.bedwars.game.ItemSpawner;
 import io.github.pronze.sba.MessageKeys;
 import io.github.pronze.sba.SBA;
@@ -46,13 +49,15 @@ public class RotatingGenerator implements IRotatingGenerator {
     private BukkitTask hologramTask;
     private Hologram hologram;
     private List<Item> spawnedItems;
+    private Game game;
 
     @SuppressWarnings("unchecked")
-    public RotatingGenerator(ItemSpawner itemSpawner, ItemStack stack, Location location) {
+    public RotatingGenerator(ItemSpawner itemSpawner, ItemStack stack, Location location, Game game) {
+        this.game = game;
         this.itemSpawner = itemSpawner;
         this.stack = stack;
         this.location = location;
-        this.time = itemSpawner.getItemSpawnerType().getInterval() + 1;
+        this.time = getTimeFromTypeAndTier(itemSpawner.getItemSpawnerType().getMaterial(), tierLevel);
         this.lines = LanguageService
                 .getInstance()
                 .get(MessageKeys.ROTATING_GENERATOR_FORMAT)
@@ -101,6 +106,7 @@ public class RotatingGenerator implements IRotatingGenerator {
 
                 boolean full = itemSpawner.getMaxSpawnedResources() <= spawnedItems.size();
                 time--;
+//                Logger.info("Rotating time " + time + ", );
 
                 final var format = LanguageService
                         .getInstance()
@@ -127,8 +133,32 @@ public class RotatingGenerator implements IRotatingGenerator {
 
                 update(newLines);
 
-                if (time <= 0) {
-                    time = itemSpawner.getItemSpawnerType().getInterval();
+                if (time < 0) {
+                    time = getTimeFromTypeAndTier(itemSpawner.getItemSpawnerType().getMaterial(), tierLevel) - 1; //itemSpawner.getItemSpawnerType().getInterval();
+                    // Spawn item
+                    BedwarsSBAResourceSpawnEvent resourceSpawnEvent = new BedwarsSBAResourceSpawnEvent(game, itemSpawner,
+                            itemSpawner.type.getStack(1));
+                    Main.getInstance().getServer().getPluginManager().callEvent(resourceSpawnEvent);
+
+                    if (resourceSpawnEvent.isCancelled()) {
+                        return;
+                    }
+
+                    ItemStack resource = resourceSpawnEvent.getResource();
+
+                    resource.setAmount(itemSpawner.nextMaxSpawn(resource.getAmount(), null));
+
+                    if (resource.getAmount() > 0) {
+                        Location loc = itemSpawner.getLocation().clone().add(0, 0.05, 0);
+                        Item item = loc.getWorld().dropItem(loc, resource);
+                        double spread = itemSpawner.type.getSpread();
+                        if (spread != 1.0) {
+                            item.setVelocity(item.getVelocity().multiply(spread));
+                        }
+                        item.setPickupDelay(0);
+                        itemSpawner.add(item);
+                    }
+
                 }
             }
         }.runTaskTimer(SBA.getPluginInstance(), 0L, 20L);
@@ -159,4 +189,29 @@ public class RotatingGenerator implements IRotatingGenerator {
     public void setLocation(@NotNull Location location) {
         this.location = location;
     }
+
+    static int getTimeFromTypeAndTier(Material material, int tier){
+        switch(material) {
+            case EMERALD:
+                switch(tier) {
+                    // case 1: return 56;
+                    case 2:
+                        return 40;
+                    case 3:
+                        return 28;
+                    default:
+                        return 56;
+                }
+            case DIAMOND:
+                switch(tier) {
+//                    case 1: return 30;
+                    case 2: return 24;
+                    case 3: return 12;
+                    default:
+                        return 30;
+            }
+            default: return -1;
+        }
+    }
+
 }

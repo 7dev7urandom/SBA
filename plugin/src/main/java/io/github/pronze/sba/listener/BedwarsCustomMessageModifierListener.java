@@ -1,11 +1,13 @@
 package io.github.pronze.sba.listener;
 
+import io.github.pronze.sba.LastHit;
 import io.github.pronze.sba.MessageKeys;
 import io.github.pronze.sba.SBA;
 import io.github.pronze.sba.lang.Message;
 import io.github.pronze.sba.lib.lang.LanguageService;
 
 import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -53,6 +55,9 @@ public class BedwarsCustomMessageModifierListener implements Listener {
     @EventHandler
     public void onBedWarsBedDestroyedMessageSendEvent(BedwarsBedDestroyedMessageSendEvent event) {
         event.setCancelled(true);
+        if(event.getDestroyer() == null) {
+            return;
+        }
         final var teamColorStr = TeamColor.fromApiColor(event.getDestroyedTeam().getColor()).chatColor.toString();
         final var destroyerTeamColorStr = TeamColor.fromApiColor(event.getGame().getTeamOfPlayer(event.getDestroyer()).getColor()).chatColor.toString();
 
@@ -82,8 +87,9 @@ public class BedwarsCustomMessageModifierListener implements Listener {
                 .replace("%player%", victimTeamColorStr + event.getVictim().getDisplayName()+ChatColor.RESET);
 
 
-        final var killer = victim.getKiller();
-        if (killer != null) {
+        LastHit lastHit = LastHit.getLastHit(victim);
+        if (lastHit != null && System.currentTimeMillis() - 6000 < lastHit.getWhen()) {
+            final Player killer = lastHit.getWho();
             final var killerTeam = event.getGame().getTeamOfPlayer(killer);
             final var killerTeamColorStr = TeamColor.fromApiColor(killerTeam.getColor()).chatColor.toString();
 

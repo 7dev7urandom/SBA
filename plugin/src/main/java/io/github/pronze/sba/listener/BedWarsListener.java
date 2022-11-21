@@ -1,5 +1,6 @@
 package io.github.pronze.sba.listener;
 
+import io.github.pronze.sba.LastHit;
 import io.github.pronze.sba.MessageKeys;
 import io.github.pronze.sba.config.SBAConfig;
 import io.github.pronze.sba.events.SBAFinalKillEvent;
@@ -9,6 +10,7 @@ import io.github.pronze.sba.wrapper.SBAPlayerWrapper;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -333,9 +335,10 @@ public class BedWarsListener implements Listener {
                     arena.getPlayerData(victim.getUniqueId())
                             .ifPresent(victimData -> victimData.setDeaths(victimData.getDeaths() + 1));
 
-                    final var killer = victim.getKiller();
+                    LastHit lastHit = LastHit.getLastHit(victim);
                     // killer is present
-                    if (killer != null) {
+                    if (lastHit != null && System.currentTimeMillis() - 6000 < lastHit.getWhen()) {
+                        Player killer = lastHit.getWho();
                         Logger.trace("Killer: {} has killed Player: {}", killer.getName(), victim.getName());
                         // get victim game profile
                         final var gVictim = Main.getPlayerGameProfile(victim);

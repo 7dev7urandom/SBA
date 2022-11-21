@@ -5,9 +5,8 @@ import io.github.pronze.sba.config.SBAConfig;
 import io.github.pronze.sba.service.AntiCheatIntegration;
 import io.github.pronze.sba.utils.Logger;
 import org.bukkit.GameMode;
-import org.bukkit.entity.Explosive;
-import org.bukkit.entity.Fireball;
-import org.bukkit.entity.Player;
+import org.bukkit.block.data.type.Fire;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -60,50 +59,84 @@ public class ExplosionVelocityControlListener implements Listener {
         AntiCheatIntegration.getInstance().tntJumpLanding(player);
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.LOW)
     public void onExplode(EntityDamageByEntityEvent event) {
         final var explodedEntity = event.getDamager();
 
         if (explodedEntity instanceof Explosive) {
             final var detectionDistance = SBAConfig.getInstance().node("tnt-fireball-jumping", "detection-distance")
                     .getDouble(5.0D);
+            if(explodedEntity instanceof Fireball) {
+                Entity entity = (Entity) ((Fireball) explodedEntity).getShooter();
 
-            explodedEntity.getWorld()
-                    .getNearbyEntities(explodedEntity.getLocation(), detectionDistance, detectionDistance,
-                            detectionDistance)
-                    .stream()
-                    .filter(entity -> !entity.equals(explodedEntity))
-                    .forEach(entity -> {
-                        Vector vector = explodedEntity
-                                .getLocation()
-                                .clone()
-                                .add(0, SBAConfig.getInstance().node("tnt-fireball-jumping", "acceleration-y")
-                                        .getDouble(1.0), 0)
-                                .toVector()
-                                .subtract(explodedEntity.getLocation().toVector()).normalize();
-                        vector.setY(vector.getY()
-                                / SBAConfig.getInstance().node("tnt-fireball-jumping", "reduce-y").getDouble(2.0));
-                        vector.multiply(SBAConfig.getInstance().node("tnt-fireball-jumping", "launch-multiplier")
-                                .getDouble(4.0));
+                if (entity instanceof Player && entity == event.getEntity()) {
+                    ((Fireball) explodedEntity).setShooter(null);
+                    if(entity.getLocation().distanceSquared(explodedEntity.getLocation()) > Math.pow(detectionDistance, 2)) return;
+                    Vector vector = entity.getLocation()
+                            .subtract(explodedEntity.getLocation())
+                            .toVector()
+                            .normalize()
+                            .multiply(SBAConfig.getInstance().node("tnt-fireball-jumping", "launch-multiplier")
+                                    .getDouble(3.0))
+                            .multiply(3*(detectionDistance - entity.getLocation().distance(explodedEntity.getLocation()))/detectionDistance)
+                            .multiply(new Vector(1.0, SBAConfig.getInstance().node("tnt-fireball-jumping", "reduce-y").getDouble(0.8), 1.0));
+//                        vector.setY(Math.min(vector.getY(), 5));
+                    final var player = (Player) entity;
+                    if (player.getGameMode() == GameMode.SPECTATOR || !Main.isPlayerInGame(player)) {
+                        return;
+                    }
+                    vector.add(new Vector(player.getEyeLocation().getDirection().getX(), 0,
+                            player.getEyeLocation().getDirection().getZ()));
+                    AntiCheatIntegration.getInstance().beginTntJump(player);
+                    player.setVelocity(vector);
+                    explosionAffectedPlayers.put(player, startTask(player));
 
-                        if (entity instanceof Player) {
-                            final var player = (Player) entity;
-                            if (player.getGameMode() == GameMode.SPECTATOR || !Main.isPlayerInGame(player)) {
-                                return;
-                            }
-                            if(entity.getLocation().getY() < explodedEntity.getLocation().getY() - 0.5) return;
-                            vector.add(new Vector(player.getEyeLocation().getDirection().getX(), 0,
-                                    player.getEyeLocation().getDirection().getZ()));
-                            AntiCheatIntegration.getInstance().beginTntJump(player);
-                            player.setVelocity(vector);
-                            explosionAffectedPlayers.put(player, startTask(player));
-                            return;
-                        }
+//                    if (Main.getInstance().isEntityInGame(entity)) {
+//                        entity.setVelocity(vector);
+//                    }
+                }
 
-                        if (Main.getInstance().isEntityInGame(entity)) {
-                            entity.setVelocity(vector);
-                        }
-                    });
+            } else if (explodedEntity instanceof TNTPrimed) {
+                Entity entity = event.getEntity();
+                if(entity.getLocation().distanceSquared(explodedEntity.getLocation()) > Math.pow(detectionDistance, 2)) return;
+//                        Vector vector = explodedEntity
+//                                .getLocation()
+//                                .clone()
+//                                .add(0, SBAConfig.getInstance().node("tnt-fireball-jumping", "acceleration-y")
+//                                        .getDouble(1.0), 0)
+//                                .toVector()
+//                                .subtract(explodedEntity.getLocation().toVector()).normalize();
+//                        vector.setY(vector.getY()
+//                                / SBAConfig.getInstance().node("tnt-fireball-jumping", "reduce-y").getDouble(2.0));
+//                        vector.multiply(SBAConfig.getInstance().node("tnt-fireball-jumping", "launch-multiplier")
+//                                .getDouble(4.0));
+                Vector vector = entity.getLocation()
+                        .subtract(explodedEntity.getLocation())
+                        .toVector()
+                        .normalize()
+                        .multiply(SBAConfig.getInstance().node("tnt-fireball-jumping", "launch-multiplier")
+                                .getDouble(3.0))
+                        .multiply(3*(detectionDistance - entity.getLocation().distance(explodedEntity.getLocation()))/detectionDistance)
+                        .multiply(new Vector(1.0, SBAConfig.getInstance().node("tnt-fireball-jumping", "reduce-y").getDouble(0.8), 1.0));
+                //                        vector.setY(Math.min(vector.getY(), 5));
+
+                if (entity instanceof Player) {
+                    final var player = (Player) entity;
+                    if (player.getGameMode() == GameMode.SPECTATOR || !Main.isPlayerInGame(player)) {
+                        return;
+                    }
+                    vector.add(new Vector(player.getEyeLocation().getDirection().getX(), 0,
+                            player.getEyeLocation().getDirection().getZ()));
+                    AntiCheatIntegration.getInstance().beginTntJump(player);
+                    player.setVelocity(vector);
+                    explosionAffectedPlayers.put(player, startTask(player));
+                    return;
+                }
+
+                if (Main.getInstance().isEntityInGame(entity)) {
+                    entity.setVelocity(vector);
+                }
+            }
         }
     }
 

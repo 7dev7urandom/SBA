@@ -15,8 +15,10 @@ public enum GameTierEvent {
     EMERALD_GEN_UPGRADE_TIER_II("Emerald-II"),
     DIAMOND_GEN_UPGRADE_TIER_III("Diamond-III"),
     EMERALD_GEN_UPGRADE_TIER_III("Emerald-III"),
-    DIAMOND_GEN_UPGRADE_TIER_IV("Diamond-IV"),
-    EMERALD_GEN_UPGRADE_TIER_V("Emerald-IV"),
+    BED_BREAK("BedBreak"),
+    DRAGONS("Dragons"),
+//    DIAMOND_GEN_UPGRADE_TIER_IV("Diamond-IV"),
+//    EMERALD_GEN_UPGRADE_TIER_V("Emerald-IV"),
     GAME_END("GameEnd");
 
     private final String key;
